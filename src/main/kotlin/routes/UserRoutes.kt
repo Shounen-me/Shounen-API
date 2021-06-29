@@ -1,19 +1,19 @@
-package com.jetbrains.handson.httpapi.routes
+package routes
 
-import com.jetbrains.handson.httpapi.models.*
+import models.*
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 
-fun Route.customerRouting() {
-    route("/customer") {
+fun Route.userRouting() {
+    route("/user") {
         get {
-            if (customerStorage.isNotEmpty()) {
-                call.respond(customerStorage)
+            if (userStorage.isNotEmpty()) {
+                call.respond(userStorage)
             } else {
-                call.respondText("No customers found", status = HttpStatusCode.NotFound)
+                call.respondText("No users found", status = HttpStatusCode.NotFound)
             }
         }
         get("{id}") {
@@ -21,25 +21,25 @@ fun Route.customerRouting() {
                 "Missing or malformed id",
                 status = HttpStatusCode.BadRequest
             )
-            val customer =
-                customerStorage.find { it.id == id } ?: return@get call.respondText(
-                    "No customer with id $id",
+            val user =
+                userStorage.find { it.id == id } ?: return@get call.respondText(
+                    "No user with id $id",
                     status = HttpStatusCode.NotFound
                 )
-            call.respond(customer)
+            call.respond(user)
         }
         post {
-            val customer = call.receive<Customer>()
+            val user = call.receive<User>()
             // TODO - This shouldn't really be done in production as
             // we should be accessing a mutable list in a thread-safe manner.
             // However, in production code we wouldn't be using mutable lists as a database!
-            customerStorage.add(customer)
-            call.respondText("Customer stored correctly", status = HttpStatusCode.Created)
+            userStorage.add(user)
+            call.respondText("User stored correctly", status = HttpStatusCode.Created)
         }
         delete("{id}") {
             val id = call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
-            if (customerStorage.removeIf { it.id == id }) {
-                call.respondText("Customer removed correctly", status = HttpStatusCode.Accepted)
+            if (userStorage.removeIf { it.id == id }) {
+                call.respondText("User removed correctly", status = HttpStatusCode.Accepted)
             } else {
                 call.respondText("Not Found", status = HttpStatusCode.NotFound)
             }
@@ -50,6 +50,6 @@ fun Route.customerRouting() {
 
 fun Application.registerCustomerRoutes() {
     routing {
-        customerRouting()
+        userRouting()
     }
 }
