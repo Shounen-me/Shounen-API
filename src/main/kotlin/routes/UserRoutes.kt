@@ -3,48 +3,81 @@ package routes
 import models.*
 import io.ktor.application.*
 import io.ktor.http.*
-import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 
 fun Route.userRouting() {
-    route("/user") {
-        get {
-            if (userStorage.isNotEmpty()) {
-                call.respond(userStorage)
-            } else {
-                call.respondText("No users found", status = HttpStatusCode.NotFound)
+
+    // Post new profile or get an existing one
+    route("/user/{discordID}") {
+
+        // Post new user
+        post("{discordName}") {
+            if (userStorage.find { it.id == call.parameters["discordID"] } == null) {
+                val user = call.parameters["discordName"]?.let { it1 -> User(call.parameters["discordID"], it1) }
+                if (user != null) {
+                    userStorage.add(user)
+                }
+                call.respondText("User stored correctly", status = HttpStatusCode.Created)
+            }  else {
+                call.respondText("User already exists", status = HttpStatusCode.Forbidden)
             }
         }
-        get("{id}") {
-            val id = call.parameters["id"] ?: return@get call.respondText(
-                "Missing or malformed id",
-                status = HttpStatusCode.BadRequest
-            )
-            val user =
-                userStorage.find { it.id == id } ?: return@get call.respondText(
-                    "No user with id $id",
-                    status = HttpStatusCode.NotFound
-                )
-            call.respond(user)
+
+        // Add anime
+        post("{anime}") {
+            val user = userStorage.find { it.id == call.parameters["discordID"] }
+            if (user == null) call.respondText("User doesn't exist", status = HttpStatusCode.NotFound)
+            else {
+                user.addAnime(call.parameters["anime"])
+                call.respondText("Anime added successfully", status = HttpStatusCode.OK)
+            }
         }
-        post {
-            val user = call.receive<User>()
-            // TODO - This shouldn't really be done in production as
-            // we should be accessing a mutable list in a thread-safe manner.
-            // However, in production code we wouldn't be using mutable lists as a database!
-            userStorage.add(user)
-            call.respondText("User stored correctly", status = HttpStatusCode.Created)
+
+        // Set profile picture
+        post("{profilePicture") {
+            val user = userStorage.find { it.id == call.parameters["discordID"] }
+            if (user == null) call.respondText("User doesn't exist", status = HttpStatusCode.NotFound)
+            else {
+                call.parameters["profilePicture"]?.let { it1 -> user.setProfilePicture(it1) }
+                call.respondText("Profile picture was set correctly", status = HttpStatusCode.OK)
+            }
         }
-        delete("{id}") {
-            val id = call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
-            if (userStorage.removeIf { it.id == id }) {
-                call.respondText("User removed correctly", status = HttpStatusCode.Accepted)
-            } else {
-                call.respondText("Not Found", status = HttpStatusCode.NotFound)
+
+
+        // Get user's own profile
+        get() {
+            val user = userStorage.find { it.id == call.parameters["discordID"] }
+            if (user == null) call.respondText("User doesn't exist", status = HttpStatusCode.NotFound)
+            else call.respond(user)
+        }
+
+        // Get user profile by Discord name
+        get("{discordName") {
+            val user = userStorage.find { it.userName == call.parameters["discordName"] }
+            if (user == null) call.respondText("User doesn't exist or changed name", status = HttpStatusCode.NotFound)
+            else call.respond(user)
+        }
+
+        // Get user profile by unique Discord User ID
+        get("searchedID") {
+            val user = userStorage.find { it.id == call.parameters["searchedID"] }
+            if (user == null) call.respondText("User doesn't exist", status = HttpStatusCode.NotFound)
+            else call.respond(user)
+        }
+
+        // Delete user profile
+        delete() {
+            val user = userStorage.find { it.id == call.parameters["discordID"] }
+            if (user == null) call.respondText("User doesn't exist", status = HttpStatusCode.NotFound)
+            else {
+                userStorage.remove(user)
+                call.respondText("User successfully deleted", status = HttpStatusCode.OK)
             }
         }
     }
+
+
 }
 
 
