@@ -3,14 +3,14 @@ package models
 import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.net.URL
 
 
 @Serializable
 data class User(val id: String?, val userName: String) {
 
-    private var profilePicture = ""
+    private var profilePicture = "zero"
     private val animeList = mutableListOf<Anime>()
-    var averageRating: Double = animeList.stream().mapToDouble(){it.rating}.average().asDouble
     fun addAnime(anime: String?) {
         anime?.let { Anime(it) }?.let { animeList.add(it) }
     }
@@ -19,14 +19,22 @@ data class User(val id: String?, val userName: String) {
         return animeList
     }
 
-    // Used for user profile display in Discord
+
     fun getProfilePicture(): String {
-        return if (profilePicture == "") createWaifuPicture() else this.profilePicture
+        return if (profilePicture == "zero") createWaifuPicture() else this.profilePicture
     }
 
-    fun setProfilePicture(picture: String) {
-        this.profilePicture = picture
+    fun setProfilePicture(url: String): String {
+        this.profilePicture = url
+        return "Profile picture successfully set!"
+        /*if (URL(url).toURI() != null) {
+            this.profilePicture = url
+            return "Profile picture succesfully set!"
+        }
+        return "Please enter a valid url for your profile picture."
+         */
     }
+
 
     // Get random picture from Waifu.pics
     private fun createWaifuPicture(): String {
