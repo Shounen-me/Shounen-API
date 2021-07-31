@@ -2,6 +2,7 @@
 /.gradle/
 /build/
 /.idea/
+src/test/kotlin/ProfilePictureTest.http
 src/main/kotlin/random.kt
 src/main/resources/secrets
 src/main/kotlin/database/Test.kt

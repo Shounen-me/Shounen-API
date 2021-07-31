@@ -82,6 +82,7 @@ class DatabaseAccess {
         animeList = convertList(this[users.animeList])
     )
 
+    // Helper function because Exposed does not support Array type columns (yet)
     private fun convertList(list: String): List<String> {
         return listOf(*list.split(",").toTypedArray())
     }

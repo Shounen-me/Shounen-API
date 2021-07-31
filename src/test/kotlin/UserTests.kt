@@ -5,18 +5,17 @@ import io.ktor.server.testing.*
 import models.Anime
 import models.userStorage
 import org.junit.Test
+import src.main.kotlin.database.DatabaseAccess
 import src.main.kotlin.models.ProfilePicture
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 
 class UserTests {
 
-    private val token: String = Files.readAllLines(Path.of("src/main/resources/authorized_keys.txt"))[0]
+    private val token: String = Files.readAllLines(Path.of("src/main/resources/secrets/authorized_keys.txt"))[0]
+    private val db = DatabaseAccess()
 
     @Test
     fun getByNameAndID() {
@@ -25,7 +24,7 @@ class UserTests {
             // Get own profile
             handleRequest(HttpMethod.Get, "/user/$token/166883258200621056").apply {
                 assertEquals(
-                    """{"id":"166883258200621056","userName":"Asuha","profilePicture":"zero","animeList":[]}""",
+                    """{"id":"166883258200621056","userName":"Asuha","profilePicture":{"link":"https://i.waifu.pics/8TL6ycS.jpg"},"animeList":[""]}""",
                     response.content
                 )
                 assertEquals(HttpStatusCode.OK, response.status())
@@ -39,21 +38,13 @@ class UserTests {
 
 
             // Get by name
-            handleRequest(HttpMethod.Get, "/user/$token/search/Iplayfair").apply {
+            handleRequest(HttpMethod.Get, "/user/$token/Asuha").apply {
                 assertEquals(
-                    """{"id":"137453944237457408","userName":"Iplayfair","profilePicture":"zero","animeList":[]}""",
+                    """{"id":"166883258200621056","userName":"Asuha","profilePicture":{"link":"https://i.waifu.pics/8TL6ycS.jpg"},"animeList":[""]}""",
                     response.content
                 )
             }
 
-
-            // Get by ID
-            handleRequest(HttpMethod.Get, "/user/$token/search/137453944237457408").apply {
-                assertEquals(
-                    """{"id":"137453944237457408","userName":"Iplayfair","profilePicture":"zero","animeList":[]}""",
-                    response.content
-                )
-            }
         }
     }
 
@@ -61,10 +52,11 @@ class UserTests {
     @Test
     fun postUser() {
         withTestApplication({ module(testing = true) }) {
-            handleRequest(HttpMethod.Post, "/user/$token/137874349846822912/Weska").apply {
-                assertNotNull(userStorage.find { it.userName == "Weska" })
-                assertNotNull(userStorage.find { it.id == "137874349846822912" })
+            handleRequest(HttpMethod.Post, "/user/$token/116275390695079945/Nadeko").apply{
+               assertEquals("User stored correctly.", response.content)
+                assertEquals(HttpStatusCode.Created, response.status())
             }
+
         }
     }
 
@@ -73,8 +65,8 @@ class UserTests {
     fun postAnime() {
         withTestApplication({ module(testing = true) }) {
             handleRequest(HttpMethod.Post, "/user/$token/166883258200621056/anime/JoJo").apply {
-                userStorage.find { it.id == "166883258200621056" }
-                    ?.let { assertTrue(it.getAnime().contains(Anime("JoJo"))) }
+                assertEquals(HttpStatusCode.OK, response.status())
+                assertTrue(db.getUser("166883258200621056").animeList.contains("JoJo"))
             }
         }
     }
@@ -85,15 +77,13 @@ class UserTests {
 
         // Delete existing user
         withTestApplication({ module(testing = true) }) {
-            handleRequest(HttpMethod.Delete, "/user/$token/166883258200621056").apply {
-                assertNull(userStorage.find { it.id == "166883258200621056" })
+            handleRequest(HttpMethod.Delete, "/user/$token/137874349846822912").apply {
                 assertEquals(HttpStatusCode.OK, response.status())
             }
         }
 
         withTestApplication({ module(testing = true) }) {
             handleRequest(HttpMethod.Delete, "/user/123456/137453944237457408").apply {
-                assertNotNull(userStorage.find { it.id == "137453944237457408" })
                 assertEquals(HttpStatusCode.Unauthorized, response.status())
             }
         }
