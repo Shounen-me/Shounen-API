@@ -3,29 +3,23 @@ package models
 import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.jetbrains.exposed.sql.ResultRow
+import src.main.kotlin.database.DatabaseAccess
+import src.main.kotlin.models.ProfilePicture
 import java.net.URL
 
 
 @Serializable
-data class User(val id: String?, val userName: String) {
-
-    private var profilePicture = "zero"
-    private val animeList = mutableListOf<Anime>()
-    fun addAnime(anime: String?) {
-        anime?.let { Anime(it) }?.let { animeList.add(it) }
-    }
-
-    fun getAnime(): List<Anime> {
-        return animeList
-    }
-
+data class User(val id: String, val userName: String,
+                val profilePicture: ProfilePicture = ProfilePicture("zero"),
+                var animeList: List<String> = mutableListOf()) {
 
     fun getProfilePicture(): String {
-        return if (profilePicture == "zero") createWaifuPicture() else this.profilePicture
+        return if (profilePicture.link == "zero") createWaifuPicture() else this.profilePicture.link
     }
 
     fun setProfilePicture(url: String): String {
-        this.profilePicture = url
+        this.profilePicture.link = url
         return "Profile picture successfully set!"
         /*if (URL(url).toURI() != null) {
             this.profilePicture = url
@@ -34,6 +28,7 @@ data class User(val id: String?, val userName: String) {
         return "Please enter a valid url for your profile picture."
          */
     }
+
 
 
     // Get random picture from Waifu.pics
@@ -47,6 +42,8 @@ data class User(val id: String?, val userName: String) {
         val picture = client.newCall(request).execute()
         return picture.body().string().subSequence(8, 40).toString()
     }
+
+
 
 
 }
