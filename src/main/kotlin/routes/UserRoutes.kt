@@ -46,34 +46,15 @@ fun Route.getUser() {
     }
 }
 
-/*
-fun Route.userSearch() {
-    get("/user/{token}/search/{wildcard}") { // WildCard = Discord ID or Name
-        if (!authorized_token.contains(call.parameters["token"])) {
-            call.respondText("Unauthorized access.", status = HttpStatusCode.Unauthorized)
-        } else {
-            val user: User?
-            val searchParameter: String? = call.parameters["wildcard"]
-            if (searchParameter != null && searchParameter.toLongOrNull() == null) {
-                user = userStorage.find { it.userName == searchParameter }
-            } else {
-                user = userStorage.find { it.id == searchParameter }
-            }
-
-            if (user == null) call.respondText("User does not exist.", status = HttpStatusCode.NotFound)
-            else call.respond(user)
-        }
-    }
-}
- */
-
 fun Route.postAnime() {
     post("/user/{token}/{discordID}/anime/{name}") {
         if (!authorized_token.contains(call.parameters["token"])) {
             call.respondText("Unauthorized access.", status = HttpStatusCode.Unauthorized)
         } else {
             val id = call.parameters["discordID"]
-            val anime = call.parameters["name"]
+            var anime = call.parameters["name"]
+            // Replace '+' seperated name to get the actual name
+            if (anime != null && anime.contains("+")) anime = anime.replace("+", " ")
             val user = id?.let { it1 -> db.getUser(it1) }
             if (user != null && anime != null && user.id != "") {
                 db.postAnime(id, anime)
