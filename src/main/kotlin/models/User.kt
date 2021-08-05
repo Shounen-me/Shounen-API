@@ -12,7 +12,7 @@ import java.net.URL
 @Serializable
 data class User(val id: String, val userName: String,
                 val profilePicture: ProfilePicture = ProfilePicture("zero"),
-                var animeList: List<String> = mutableListOf()) {
+                var animeList: Int) {
 
     fun getProfilePicture(): String {
         return if (profilePicture.link == "zero") createWaifuPicture() else this.profilePicture.link
@@ -49,8 +49,5 @@ data class User(val id: String, val userName: String,
 }
 
 
-val userStorage = mutableListOf<User>(
-    User("166883258200621056", "Asuha"),
-    User("137453944237457408", "Iplayfair")
-)
+
 

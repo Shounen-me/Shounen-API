@@ -13,13 +13,13 @@ class DatabaseAccess {
         val discordID = varchar("discordID", 255)
         val userName = varchar("userName", 255)
         val profilePicture = varchar("profilePicture", 255)
-        val animeList = text("animeList")
+        val animeList = integer("animeList")
     }
 
 
     fun getUser(wildcard: String): User { // wildcard = unique DiscordID or username
         connect()
-        var user = User("", "", ProfilePicture(""), mutableListOf())
+        var user = User("", "", ProfilePicture(""),0)
         try {
             transaction {
                 addLogger(StdOutSqlLogger)
@@ -43,19 +43,22 @@ class DatabaseAccess {
                 it[discordID] = user.id
                 it[userName] = user.userName
                 it[profilePicture] = "zero"
-                it[animeList] = ""
+                it[animeList] = 0
             } get users.discordID
         }
     }
+
 
     fun postAnime(id: String, anime: String) {
         connect()
         transaction {
             addLogger(StdOutSqlLogger)
+            /*
             val newText = users.select{ users.discordID eq id}.map{ it[users.animeList]}.first() + "$anime, "
             users.update({users.discordID eq id}) {
                 it[animeList] = newText
             }
+             */
         }
     }
 
@@ -79,13 +82,15 @@ class DatabaseAccess {
         id = this[users.discordID],
         userName = this[users.userName],
         profilePicture = ProfilePicture(this[users.profilePicture]),
-        animeList = convertList(this[users.animeList])
+        animeList = this[users.animeList]
     )
 
     // Helper function because Exposed does not support Array type columns (yet)
+    /*
     private fun convertList(list: String): List<String> {
         return listOf(*list.split(",").toTypedArray())
     }
+     */
 
 
 }
