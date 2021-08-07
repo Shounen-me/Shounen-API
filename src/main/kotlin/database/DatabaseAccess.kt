@@ -1,11 +1,15 @@
 package src.main.kotlin.database
 
+import com.google.gson.Gson
+import functionality.AnimeList
+import functionality.client
+import functionality.refreshToken
+import kotlinx.serialization.Serializable
 import models.User
+import okhttp3.Request
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import src.main.kotlin.models.ProfilePicture
-import java.nio.file.Files
-import java.nio.file.Path
 
 class DatabaseAccess {
 
@@ -14,6 +18,9 @@ class DatabaseAccess {
         val userName = varchar("userName", 255)
         val profilePicture = varchar("profilePicture", 255)
         val animeList = integer("animeList")
+        val malUsername = varchar("malUsername", 255)
+        val accessToken = varchar("accessToken", 255)
+        val refreshToken = varchar("refreshToken", 255)
     }
 
 
@@ -44,6 +51,9 @@ class DatabaseAccess {
                 it[userName] = user.userName
                 it[profilePicture] = "zero"
                 it[animeList] = 0
+                it[malUsername] = "/"
+                it[accessToken] = ""
+                it[refreshToken] = ""
             } get users.discordID
         }
     }
@@ -53,12 +63,7 @@ class DatabaseAccess {
         connect()
         transaction {
             addLogger(StdOutSqlLogger)
-            /*
-            val newText = users.select{ users.discordID eq id}.map{ it[users.animeList]}.first() + "$anime, "
-            users.update({users.discordID eq id}) {
-                it[animeList] = newText
-            }
-             */
+
         }
     }
 
@@ -77,6 +82,64 @@ class DatabaseAccess {
         transaction { users.deleteWhere { users.discordID eq discordID } }
     }
 
+    // First time sync to MAL account
+    fun syncMalToDB(discordID: String, access: String, refresh: String) {
+        connect()
+        transaction {
+            addLogger(StdOutSqlLogger)
+            users.update({users.discordID eq id}) {
+                it[accessToken] = access
+                it[refreshToken] = refresh
+            }
+            val userName = getMALUserName(discordID)
+            users.update({users.discordID eq id}) {
+                it[malUsername] = userName
+            }
+        }
+    }
+
+
+    // Get user name from MyAnimeList
+    private fun getMALUserName(discordID: String): String {
+        // https://api.myanimelist.net/v2/users/@me?fields=anime_statistics
+        refresh(discordID)
+        val tokens = transaction {
+            users.select { users.discordID eq discordID }.first().toTokens()
+        }
+        val request = Request.Builder()
+            .url("https://api.myanimelist.net/v2/users/@me?fields=name")
+            .addHeader("Authorization", "Bearer ${tokens.access_token}")
+            .get().build()
+        val response = client.newCall(request).execute()
+        return Gson().fromJson(response.body().string(), String::class.java)
+    }
+
+
+    // Fetch current anime list from MAL
+    fun fetch_list(discordID: String): AnimeList? {
+        refresh(discordID)
+        val tokens = transaction {
+            users.select { users.discordID eq discordID }.first().toTokens()
+        }
+        val request = Request.Builder()
+            .url("https://api.myanimelist.net/v2/users/@me/animeList?limit=1000")
+            .addHeader("Authorization", "Bearer ${tokens.access_token}")
+            .get().build()
+        val response = client.newCall(request).execute()
+        return Gson().fromJson(response.body().string(), AnimeList::class.java)
+    }
+
+
+    private fun refresh(discordID: String) {
+        val tokens = refreshToken(discordID)
+        transaction {
+            users.update({users.discordID eq id}) {
+                it[accessToken] = tokens.access_token
+                it[refreshToken] = tokens.refresh_token
+            }
+        }
+    }
+
 
     private fun ResultRow.toUser() = User(
         id = this[users.discordID],
@@ -85,12 +148,14 @@ class DatabaseAccess {
         animeList = this[users.animeList]
     )
 
-    // Helper function because Exposed does not support Array type columns (yet)
-    /*
-    private fun convertList(list: String): List<String> {
-        return listOf(*list.split(",").toTypedArray())
-    }
-     */
+
+    @Serializable
+    data class Token (val access_token: String, val refresh_token: String)
+
+    private fun ResultRow.toTokens() = Token(
+        access_token = this[users.accessToken],
+        refresh_token = this[users.refreshToken]
+    )
 
 
 }

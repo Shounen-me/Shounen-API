@@ -1,27 +1,18 @@
 package src.main.kotlin.functionality
 
+import org.apache.commons.lang3.RandomStringUtils
 import java.io.UnsupportedEncodingException
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.security.SecureRandom
 import java.util.*
 
+private const val CODE_VERIFIER_STRING =
+    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._~"
 
-@Throws(UnsupportedEncodingException::class)
-fun generateCodeVerifier(): String {
-    val secureRandom = SecureRandom()
-    val codeVerifier = ByteArray(32)
-    secureRandom.nextBytes(codeVerifier)
-    return Base64.getUrlEncoder().withoutPadding().encodeToString(codeVerifier)
+fun generateVerifier(length: Int): String {
+    return RandomStringUtils.random(length, CODE_VERIFIER_STRING)
 }
 
-@Throws(UnsupportedEncodingException::class, NoSuchAlgorithmException::class)
-fun generateCodeChallenge(codeVerifier: String): String {
-    val bytes = codeVerifier.toByteArray(charset("US-ASCII"))
-    val messageDigest = MessageDigest.getInstance("SHA-256")
-    messageDigest.update(bytes, 0, bytes.size)
-    val digest = messageDigest.digest()
-    return Base64.getUrlEncoder().withoutPadding().encodeToString(digest)
-}
 
 

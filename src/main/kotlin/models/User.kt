@@ -12,7 +12,7 @@ import java.net.URL
 @Serializable
 data class User(val id: String, val userName: String,
                 val profilePicture: ProfilePicture = ProfilePicture("zero"),
-                var animeList: Int) {
+                var animeList: Int = 0, val malUserName: String = "/") {
 
     fun getProfilePicture(): String {
         return if (profilePicture.link == "zero") createWaifuPicture() else this.profilePicture.link

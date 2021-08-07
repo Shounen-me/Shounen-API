@@ -1,5 +1,7 @@
 package routes
 
+import functionality.getMALUrl
+import functionality.syncMal
 import models.*
 import io.ktor.application.*
 import io.ktor.http.*
@@ -95,6 +97,33 @@ fun Route.deleteUser() {
                 call.respondText("Deletion was successful.", status = HttpStatusCode.OK)
             } else
                 call.respondText("User does not exist.", status = HttpStatusCode.NotFound)
+        }
+    }
+}
+
+fun Route.syncInit() {
+    get("/{discordID}/mal/sync/init") {
+        val mal = getMALUrl()
+        call.respondText("Verifier: $mal[0]" + " & " + "Link: $mal[1] " + call.parameters["discordID"], status = HttpStatusCode.OK)
+    }
+}
+
+fun Route.syncCallbackStandard() {
+    get("/mal/sync/{callback}") {
+        call.parameters["callback"]?.let { it1 -> call.respondText(it1, status = HttpStatusCode.OK) }
+    }
+}
+
+fun Route.syncCallbackDiscord() {
+    get("/{discordID}/mal/sync/{verifier}/{callback}") {
+        val param = call.parameters["callback"]
+        if (param != null) {
+            val s = param.substring(param.indexOf("?") + 1)
+            val parameters = s.split("&")
+            val code = parameters[0].substring(5)
+            val id = call.parameters["discordID"]!!
+            val verifier = call.parameters["verifier"]!!
+            syncMal(id, code, verifier)
         }
     }
 }

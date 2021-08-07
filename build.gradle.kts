@@ -30,4 +30,6 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
     implementation("org.postgresql:postgresql:42.2.2")
+    implementation("org.apache.commons:commons-lang3:3.0")
+    implementation ("com.google.code.gson:gson:2.8.7")
 }
