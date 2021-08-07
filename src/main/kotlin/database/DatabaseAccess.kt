@@ -6,6 +6,7 @@ import functionality.client
 import functionality.refreshToken
 import kotlinx.serialization.Serializable
 import models.User
+import okhttp3.FormBody
 import okhttp3.Request
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -26,7 +27,7 @@ class DatabaseAccess {
 
     fun getUser(wildcard: String): User { // wildcard = unique DiscordID or username
         connect()
-        var user = User("", "", ProfilePicture(""),0)
+        var user = User("", "", ProfilePicture(""))
         try {
             transaction {
                 addLogger(StdOutSqlLogger)
@@ -59,12 +60,22 @@ class DatabaseAccess {
     }
 
 
-    fun postAnime(id: String, anime: String) {
+    fun postAnime(discordID: String, animeID: String): Boolean {
         connect()
         transaction {
             addLogger(StdOutSqlLogger)
-
+            refresh(discordID)
+            val tokens = transaction {
+                users.select { users.discordID eq discordID }.first().toTokens()
+            }
+            val request = Request.Builder()
+                .url("https://api.myanimelist.net/v2/anime/$animeID/my_list_status")
+                .addHeader("Authorization", "Bearer ${tokens.access_token}")
+                .put(FormBody.Builder().build()).build()
+            val response = client.newCall(request).execute()
+            return@transaction response.code() == 200
         }
+        return false
     }
 
     fun postProfilePicture(id: String, link: String) {
@@ -101,7 +112,6 @@ class DatabaseAccess {
 
     // Get user name from MyAnimeList
     private fun getMALUserName(discordID: String): String {
-        // https://api.myanimelist.net/v2/users/@me?fields=anime_statistics
         refresh(discordID)
         val tokens = transaction {
             users.select { users.discordID eq discordID }.first().toTokens()
@@ -115,18 +125,33 @@ class DatabaseAccess {
     }
 
 
-    // Fetch current anime list from MAL
-    fun fetch_list(discordID: String): AnimeList? {
+    // Fetch current (completed) anime list from MAL
+    fun fetchCompletedAnime(discordID: String): Array<String> {
         refresh(discordID)
         val tokens = transaction {
             users.select { users.discordID eq discordID }.first().toTokens()
         }
         val request = Request.Builder()
-            .url("https://api.myanimelist.net/v2/users/@me/animeList?limit=1000")
+            .url("https://api.myanimelist.net/v2/users/@me/animeList?status=completed&limit=1000")
             .addHeader("Authorization", "Bearer ${tokens.access_token}")
             .get().build()
         val response = client.newCall(request).execute()
-        return Gson().fromJson(response.body().string(), AnimeList::class.java)
+        return Gson().fromJson(response.body().string(), AnimeList::class.java).data
+    }
+
+
+    // Fetch the ten latest anime on the user's 'currently watching' list
+    fun fetchWatchingAnime(discordID: String): Array<String> {
+        refresh(discordID)
+        val tokens = transaction {
+            users.select { users.discordID eq discordID }.first().toTokens()
+        }
+        val request = Request.Builder()
+            .url("https://api.myanimelist.net/v2/users/@me/animeList?status=watching&limit=10")
+            .addHeader("Authorization", "Bearer ${tokens.access_token}")
+            .get().build()
+        val response = client.newCall(request).execute()
+        return Gson().fromJson(response.body().string(), AnimeList::class.java).data
     }
 
 
@@ -145,7 +170,8 @@ class DatabaseAccess {
         id = this[users.discordID],
         userName = this[users.userName],
         profilePicture = ProfilePicture(this[users.profilePicture]),
-        animeList = this[users.animeList]
+        animeList = this[users.animeList],
+        malUserName = this[users.malUsername]
     )
 
 

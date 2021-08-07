@@ -49,18 +49,22 @@ fun Route.getUser() {
 }
 
 fun Route.postAnime() {
-    post("/user/{token}/{discordID}/anime/{name}") {
+    post("/user/{token}/{discordID}/anime/{animeID}") {
         if (!authorized_token.contains(call.parameters["token"])) {
             call.respondText("Unauthorized access.", status = HttpStatusCode.Unauthorized)
         } else {
             val id = call.parameters["discordID"]
-            var anime = call.parameters["name"]
+            val anime = call.parameters["name"]
+            /*
             // Replace '+' seperated name to get the actual name
             if (anime != null && anime.contains("+")) anime = anime.replace("+", " ")
+             */
             val user = id?.let { it1 -> db.getUser(it1) }
             if (user != null && anime != null && user.id != "") {
-                db.postAnime(id, anime)
-                call.respondText("Anime added successfully.", status = HttpStatusCode.OK)
+                if (db.postAnime(id, anime))
+                    call.respondText("Anime added successfully.", status = HttpStatusCode.OK)
+                else
+                    call.respondText("Anime couldn't be added, please try again..", status = HttpStatusCode.NotFound)
             } else {
                 call.respondText("User does not exist.", status = HttpStatusCode.NotFound)
             }
