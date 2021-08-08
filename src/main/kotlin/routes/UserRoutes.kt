@@ -1,5 +1,6 @@
 package routes
 
+import functionality.clientId
 import functionality.getMALUrl
 import functionality.syncMal
 import models.*
@@ -49,7 +50,7 @@ fun Route.getUser() {
 }
 
 fun Route.postAnime() {
-    post("/user/{token}/{discordID}/anime/{animeID}") {
+    post("/mal/{token}/{discordID}/anime/{animeID}") {
         if (!authorized_token.contains(call.parameters["token"])) {
             call.respondText("Unauthorized access.", status = HttpStatusCode.Unauthorized)
         } else {
@@ -109,6 +110,14 @@ fun Route.syncInit() {
     get("/{discordID}/mal/sync/init") {
         val mal = getMALUrl()
         call.respondText("Verifier: $mal[0]" + " & " + "Link: $mal[1] " + call.parameters["discordID"], status = HttpStatusCode.OK)
+    }
+}
+
+fun Route.syncRedirect() {
+    get("/mal/redirect/{verifier}/{requestID}") {
+        val verifier = call.parameters["verifier"]!!
+        val requestID = call.parameters["requestID"]!!
+        call.respondRedirect("https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=$clientId&code_challenge=$verifier&state=RequestID$requestID")
     }
 }
 

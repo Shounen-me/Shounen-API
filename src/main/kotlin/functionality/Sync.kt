@@ -9,7 +9,6 @@ import src.main.kotlin.database.DatabaseAccess
 import src.main.kotlin.functionality.generateVerifier
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.random.Random
 
 @Serializable
 data class MAL_DATA(val token_type: String, val expires_in: String, val access_token: String, val refresh_token: String)
@@ -62,7 +61,7 @@ fun refreshToken(refresh_token: String): MAL_DATA {
 
 fun getMALUrl(): List<String> {
     val verifier = generateVerifier(128)
-    val id = Random(10000)
-    val link = "https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=$verifier&code_challenge=$verifier&state=RequestID$id"
+    val id = (0..1000).random()
+    val link = "https://api.shounen.me/mal/redirect/$verifier/$id"
     return mutableListOf(verifier, link)
 }
