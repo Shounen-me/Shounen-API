@@ -149,5 +149,9 @@ fun Application.registerUserRoutes() {
         postAnime()
         postProfilePicture()
         deleteUser()
+        syncInit()
+        syncRedirect()
+        syncCallbackStandard()
+        syncCallbackDiscord()
     }
 }

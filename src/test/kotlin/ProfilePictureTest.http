@@ -8,3 +8,6 @@ Content-Type: application/json
 ###
 GET http://127.0.0.1:8080/user/166883258200621056
 Accept: application/json
+
+###
+GET http://127.0.0.1:8080/mal/redirect/B3fyJqEquHIMdx24OcwBZqwbfsWMocmBi-_1S2TA.MgnD-LhfufatQK5OZYHO8AY2EKs6YZ6WOcWgERuPQi_l8LrBddBUMJJ07Pe6nbMPJsSOCFixh4IoYLrNsOhk2_c/43
