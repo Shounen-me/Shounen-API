@@ -8,10 +8,10 @@ plugins {
     kotlin("plugin.serialization") version "1.5.20"
 }
 
-group = "com.example"
-version = "0.0.1"
+group = "me.shounen"
+version = "0.0.2"
 application {
-    mainClass.set("com.example.ApplicationKt")
+    mainClass.set("src.main.kotlin.ApplicationKt")
 }
 
 repositories {
