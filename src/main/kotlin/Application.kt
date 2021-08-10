@@ -4,6 +4,7 @@ import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.serialization.*
 import routes.registerUserRoutes
+import src.main.kotlin.routes.registerMALRoutes
 
 // TODO Database Integration with PostgreSQL and Exposed
 // TODO Profile Picture SFW Authorization (manual per admin?)
@@ -18,4 +19,5 @@ fun Application.module(testing: Boolean = false) {
         json()
     }
     registerUserRoutes()
+    registerMALRoutes()
 }

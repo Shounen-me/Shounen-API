@@ -17,7 +17,9 @@ private val db = DatabaseAccess()
 fun Route.syncInit() {
     get("/mal/{discordID}/sync/init") {
         val mal = getMALUrl()
-        call.respondText("Verifier: $mal[0]" + " & " + "Link: $mal[1] " + call.parameters["discordID"], status = HttpStatusCode.OK)
+        val verifier = mal[0]
+        val link = mal[1]
+        call.respondText(verifier + ", " + "$link, " + call.parameters["discordID"], status = HttpStatusCode.OK)
     }
 }
 
@@ -30,13 +32,13 @@ fun Route.syncRedirect() {
 }
 
 fun Route.syncCallbackStandard() {
-    get("/mal/sync/{callback}") {
+    get("/mal/sync/standard/{callback}") {
         call.parameters["callback"]?.let { it1 -> call.respondText(it1, status = HttpStatusCode.OK) }
     }
 }
 
 fun Route.syncCallbackDiscord() {
-    get("/mal/{discordID}/sync/{verifier}/{callback}") {
+    get("/mal/{discordID}/sync/discord/{verifier}/{callback}") {
         val param = call.parameters["callback"]
         if (param != null) {
             val s = param.substring(param.indexOf("?") + 1)
@@ -74,7 +76,7 @@ fun Route.postAnime() {
     }
 }
 
-fun Application.registerUserRoutes() {
+fun Application.registerMALRoutes() {
     routing {
         postAnime()
         syncInit()

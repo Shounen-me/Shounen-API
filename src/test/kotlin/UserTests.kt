@@ -72,6 +72,17 @@ class UserTests {
 
      */
 
+    @Test
+    fun getMAL() {
+        withTestApplication({ module(testing = true) }) {
+            handleRequest(HttpMethod.Get, "/mal/166883258200621056/sync/init").apply{
+                println(response.content)
+                assertEquals(HttpStatusCode.OK, response.status())
+            }
+
+        }
+    }
+
 
     @Test
     fun deleteUser() {
