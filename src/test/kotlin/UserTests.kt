@@ -15,6 +15,7 @@ class UserTests {
     private val token: String = Files.readAllLines(Path.of("src/main/resources/secrets/authorized_keys.txt"))[0]
     private val db = DatabaseAccess()
 
+    /*
     @Test
     fun getByNameAndID() {
         withTestApplication({ module(testing = true) }) {
@@ -50,7 +51,7 @@ class UserTests {
     @Test
     fun postUser() {
         withTestApplication({ module(testing = true) }) {
-            handleRequest(HttpMethod.Post, "/user/$token/116275390695079945/Nadeko").apply{
+            handleRequest(HttpMethod.Post, "/user/$token/166883258200621056/Asuha").apply{
                assertEquals("User stored correctly.", response.content)
                 assertEquals(HttpStatusCode.Created, response.status())
             }
@@ -68,6 +69,8 @@ class UserTests {
             }
         }
     }
+
+     */
 
 
     @Test

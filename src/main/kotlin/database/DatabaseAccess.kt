@@ -14,7 +14,7 @@ import src.main.kotlin.models.ProfilePicture
 
 class DatabaseAccess {
 
-    object users: Table() {
+    object userStorage: Table() {
         val discordID = varchar("discordID", 255)
         val userName = varchar("userName", 255)
         val profilePicture = varchar("profilePicture", 255)
@@ -31,11 +31,12 @@ class DatabaseAccess {
         try {
             transaction {
                 addLogger(StdOutSqlLogger)
-                // SchemaUtils.create(users)
+                SchemaUtils.create(userStorage)
+                SchemaUtils.createMissingTablesAndColumns(userStorage)
                 user = if (wildcard.toLongOrNull() != null) {
-                    users.select { users.discordID eq wildcard }.first().toUser()
+                    userStorage.select { userStorage.discordID eq wildcard }.first().toUser()
                 } else {
-                    users.select { users.userName eq wildcard }.first().toUser()
+                    userStorage.select { userStorage.userName eq wildcard }.first().toUser()
                 }
                 user.setProfilePicture(user.getProfilePicture())
             }
@@ -47,7 +48,9 @@ class DatabaseAccess {
         connect()
         transaction {
             addLogger(StdOutSqlLogger)
-            users.insert {
+            SchemaUtils.create(userStorage)
+            SchemaUtils.createMissingTablesAndColumns(userStorage)
+            userStorage.insert {
                 it[discordID] = user.id
                 it[userName] = user.userName
                 it[profilePicture] = "zero"
@@ -55,7 +58,7 @@ class DatabaseAccess {
                 it[malUsername] = "/"
                 it[accessToken] = ""
                 it[refreshToken] = ""
-            } get users.discordID
+            } get userStorage.discordID
         }
     }
 
@@ -66,7 +69,7 @@ class DatabaseAccess {
             addLogger(StdOutSqlLogger)
             refresh(discordID)
             val tokens = transaction {
-                users.select { users.discordID eq discordID }.first().toTokens()
+                userStorage.select { userStorage.discordID eq discordID }.first().toTokens()
             }
             val request = Request.Builder()
                 .url("https://api.myanimelist.net/v2/anime/$animeID/my_list_status")
@@ -82,7 +85,7 @@ class DatabaseAccess {
         connect()
         transaction {
             addLogger(StdOutSqlLogger)
-            users.update({users.discordID eq id}) {
+            userStorage.update({userStorage.discordID eq id}) {
                 it[profilePicture] = link
             }
         }
@@ -90,7 +93,7 @@ class DatabaseAccess {
 
     fun deleteUser(discordID: String) {
         connect()
-        transaction { users.deleteWhere { users.discordID eq discordID } }
+        transaction { userStorage.deleteWhere { userStorage.discordID eq discordID } }
     }
 
     // First time sync to MAL account
@@ -98,12 +101,12 @@ class DatabaseAccess {
         connect()
         transaction {
             addLogger(StdOutSqlLogger)
-            users.update({users.discordID eq id}) {
+            userStorage.update({userStorage.discordID eq id}) {
                 it[accessToken] = access
                 it[refreshToken] = refresh
             }
             val userName = getMALUserName(discordID)
-            users.update({users.discordID eq id}) {
+            userStorage.update({userStorage.discordID eq id}) {
                 it[malUsername] = userName
             }
         }
@@ -114,7 +117,7 @@ class DatabaseAccess {
     private fun getMALUserName(discordID: String): String {
         refresh(discordID)
         val tokens = transaction {
-            users.select { users.discordID eq discordID }.first().toTokens()
+            userStorage.select { userStorage.discordID eq discordID }.first().toTokens()
         }
         val request = Request.Builder()
             .url("https://api.myanimelist.net/v2/users/@me?fields=name")
@@ -129,7 +132,7 @@ class DatabaseAccess {
     fun fetchCompletedAnime(discordID: String): Array<String> {
         refresh(discordID)
         val tokens = transaction {
-            users.select { users.discordID eq discordID }.first().toTokens()
+            userStorage.select { userStorage.discordID eq discordID }.first().toTokens()
         }
         val request = Request.Builder()
             .url("https://api.myanimelist.net/v2/users/@me/animeList?status=completed&limit=1000")
@@ -144,7 +147,7 @@ class DatabaseAccess {
     fun fetchWatchingAnime(discordID: String): Array<String> {
         refresh(discordID)
         val tokens = transaction {
-            users.select { users.discordID eq discordID }.first().toTokens()
+            userStorage.select { userStorage.discordID eq discordID }.first().toTokens()
         }
         val request = Request.Builder()
             .url("https://api.myanimelist.net/v2/users/@me/animeList?status=watching&limit=10")
@@ -158,7 +161,7 @@ class DatabaseAccess {
     private fun refresh(discordID: String) {
         val tokens = refreshToken(discordID)
         transaction {
-            users.update({users.discordID eq id}) {
+            userStorage.update({userStorage.discordID eq id}) {
                 it[accessToken] = tokens.access_token
                 it[refreshToken] = tokens.refresh_token
             }
@@ -167,11 +170,11 @@ class DatabaseAccess {
 
 
     private fun ResultRow.toUser() = User(
-        id = this[users.discordID],
-        userName = this[users.userName],
-        profilePicture = ProfilePicture(this[users.profilePicture]),
-        animeList = this[users.animeList],
-        malUserName = this[users.malUsername]
+        id = this[userStorage.discordID],
+        userName = this[userStorage.userName],
+        profilePicture = ProfilePicture(this[userStorage.profilePicture]),
+        animeList = this[userStorage.animeList],
+        malUserName = this[userStorage.malUsername]
     )
 
 
@@ -179,8 +182,8 @@ class DatabaseAccess {
     data class Token (val access_token: String, val refresh_token: String)
 
     private fun ResultRow.toTokens() = Token(
-        access_token = this[users.accessToken],
-        refresh_token = this[users.refreshToken]
+        access_token = this[userStorage.accessToken],
+        refresh_token = this[userStorage.refreshToken]
     )
 
 
