@@ -22,6 +22,7 @@ class DatabaseAccess {
         val malUsername = varchar("malUsername", 255)
         val accessToken = varchar("accessToken", 255)
         val refreshToken = varchar("refreshToken", 255)
+        val verifier = varchar("verifier", 255)
     }
 
 
@@ -58,6 +59,7 @@ class DatabaseAccess {
                 it[malUsername] = "/"
                 it[accessToken] = ""
                 it[refreshToken] = ""
+                it[verifier] = ""
             } get userStorage.discordID
         }
     }
@@ -166,6 +168,23 @@ class DatabaseAccess {
                 it[refreshToken] = tokens.refresh_token
             }
         }
+    }
+
+    fun setVerifier(id: String, code: String) {
+        connect()
+        transaction {
+            userStorage.update({userStorage.discordID eq id}) {
+                it[verifier] = code
+            }
+        }
+    }
+
+    fun getVerifier(id: String): String {
+        connect()
+        transaction {
+            return@transaction userStorage.select { userStorage.discordID eq id }.first()[userStorage.verifier]
+        }
+        return "User not found."
     }
 
 

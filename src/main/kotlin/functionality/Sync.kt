@@ -65,3 +65,15 @@ fun getMALUrl(): List<String> {
     val link = "https://api.shounen.me/mal/redirect/$verifier/$id"
     return mutableListOf(verifier, link)
 }
+
+fun callbackDiscord(callback: String, discordID: String) {
+    val code = callback.split("&")[0].substring(6)
+    val verifier = DatabaseAccess().getVerifier(discordID)
+
+    val request = Request.Builder()
+        .url(" https://api.shounen.me/mal/$discordID/sync/discord/$verifier/$code")
+        .get()
+        .build()
+
+    client.newCall(request).execute()
+}
