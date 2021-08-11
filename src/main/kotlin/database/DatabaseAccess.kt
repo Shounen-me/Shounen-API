@@ -12,9 +12,14 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import src.main.kotlin.models.ProfilePicture
 
+// Database Quick Fix (relation xxx existiert nicht oder spalte xxx hat null values:
+// Neuer Name für DB bzw neuen Table
+// SchemaUtils.create(UserDatabase)
+// SchemaUtils.createMissingTablesAndColumns(UserDatabase)
+
 class DatabaseAccess {
 
-    object userStorage: Table() {
+    object UserDatabase: Table() {
         val discordID = varchar("discordID", 255)
         val userName = varchar("userName", 255)
         val profilePicture = varchar("profilePicture", 255)
@@ -32,12 +37,12 @@ class DatabaseAccess {
         try {
             transaction {
                 addLogger(StdOutSqlLogger)
-                SchemaUtils.create(userStorage)
-                SchemaUtils.createMissingTablesAndColumns(userStorage)
+                SchemaUtils.create(UserDatabase)
+                SchemaUtils.createMissingTablesAndColumns(UserDatabase)
                 user = if (wildcard.toLongOrNull() != null) {
-                    userStorage.select { userStorage.discordID eq wildcard }.first().toUser()
+                    UserDatabase.select { UserDatabase.discordID eq wildcard }.first().toUser()
                 } else {
-                    userStorage.select { userStorage.userName eq wildcard }.first().toUser()
+                    UserDatabase.select { UserDatabase.userName eq wildcard }.first().toUser()
                 }
                 user.setProfilePicture(user.getProfilePicture())
             }
@@ -49,9 +54,7 @@ class DatabaseAccess {
         connect()
         transaction {
             addLogger(StdOutSqlLogger)
-            SchemaUtils.create(userStorage)
-            SchemaUtils.createMissingTablesAndColumns(userStorage)
-            userStorage.insert {
+            UserDatabase.insert {
                 it[discordID] = user.id
                 it[userName] = user.userName
                 it[profilePicture] = "zero"
@@ -60,7 +63,7 @@ class DatabaseAccess {
                 it[accessToken] = ""
                 it[refreshToken] = ""
                 it[verifier] = ""
-            } get userStorage.discordID
+            } get UserDatabase.discordID
         }
     }
 
@@ -71,7 +74,7 @@ class DatabaseAccess {
             addLogger(StdOutSqlLogger)
             refresh(discordID)
             val tokens = transaction {
-                userStorage.select { userStorage.discordID eq discordID }.first().toTokens()
+                UserDatabase.select { UserDatabase.discordID eq discordID }.first().toTokens()
             }
             val request = Request.Builder()
                 .url("https://api.myanimelist.net/v2/anime/$animeID/my_list_status")
@@ -87,7 +90,7 @@ class DatabaseAccess {
         connect()
         transaction {
             addLogger(StdOutSqlLogger)
-            userStorage.update({userStorage.discordID eq id}) {
+            UserDatabase.update({UserDatabase.discordID eq id}) {
                 it[profilePicture] = link
             }
         }
@@ -95,7 +98,7 @@ class DatabaseAccess {
 
     fun deleteUser(discordID: String) {
         connect()
-        transaction { userStorage.deleteWhere { userStorage.discordID eq discordID } }
+        transaction { UserDatabase.deleteWhere { UserDatabase.discordID eq discordID } }
     }
 
     // First time sync to MAL account
@@ -103,14 +106,17 @@ class DatabaseAccess {
         connect()
         transaction {
             addLogger(StdOutSqlLogger)
-            userStorage.update({userStorage.discordID eq id}) {
+            UserDatabase.update({UserDatabase.discordID eq id}) {
                 it[accessToken] = access
                 it[refreshToken] = refresh
             }
             val userName = getMALUserName(discordID)
-            userStorage.update({userStorage.discordID eq id}) {
+            println(userName)
+            /*
+            UserDatabase.update({UserDatabase.discordID eq id}) {
                 it[malUsername] = userName
             }
+             */
         }
     }
 
@@ -119,7 +125,7 @@ class DatabaseAccess {
     private fun getMALUserName(discordID: String): String {
         refresh(discordID)
         val tokens = transaction {
-            userStorage.select { userStorage.discordID eq discordID }.first().toTokens()
+            UserDatabase.select { UserDatabase.discordID eq discordID }.first().toTokens()
         }
         val request = Request.Builder()
             .url("https://api.myanimelist.net/v2/users/@me?fields=name")
@@ -134,7 +140,7 @@ class DatabaseAccess {
     fun fetchCompletedAnime(discordID: String): Array<String> {
         refresh(discordID)
         val tokens = transaction {
-            userStorage.select { userStorage.discordID eq discordID }.first().toTokens()
+            UserDatabase.select { UserDatabase.discordID eq discordID }.first().toTokens()
         }
         val request = Request.Builder()
             .url("https://api.myanimelist.net/v2/users/@me/animeList?status=completed&limit=1000")
@@ -149,7 +155,7 @@ class DatabaseAccess {
     fun fetchWatchingAnime(discordID: String): Array<String> {
         refresh(discordID)
         val tokens = transaction {
-            userStorage.select { userStorage.discordID eq discordID }.first().toTokens()
+            UserDatabase.select { UserDatabase.discordID eq discordID }.first().toTokens()
         }
         val request = Request.Builder()
             .url("https://api.myanimelist.net/v2/users/@me/animeList?status=watching&limit=10")
@@ -163,7 +169,7 @@ class DatabaseAccess {
     private fun refresh(discordID: String) {
         val tokens = refreshToken(discordID)
         transaction {
-            userStorage.update({userStorage.discordID eq id}) {
+            UserDatabase.update({UserDatabase.discordID eq id}) {
                 it[accessToken] = tokens.access_token
                 it[refreshToken] = tokens.refresh_token
             }
@@ -173,7 +179,7 @@ class DatabaseAccess {
     fun setVerifier(id: String, code: String) {
         connect()
         transaction {
-            userStorage.update({userStorage.discordID eq id}) {
+            UserDatabase.update({UserDatabase.discordID eq id}) {
                 it[verifier] = code
             }
         }
@@ -182,18 +188,18 @@ class DatabaseAccess {
     fun getVerifier(id: String): String {
         connect()
         transaction {
-            return@transaction userStorage.select { userStorage.discordID eq id }.first()[userStorage.verifier]
+            return@transaction UserDatabase.select { UserDatabase.discordID eq id }.first()[UserDatabase.verifier]
         }
         return "User not found."
     }
 
 
     private fun ResultRow.toUser() = User(
-        id = this[userStorage.discordID],
-        userName = this[userStorage.userName],
-        profilePicture = ProfilePicture(this[userStorage.profilePicture]),
-        animeList = this[userStorage.animeList],
-        malUserName = this[userStorage.malUsername]
+        id = this[UserDatabase.discordID],
+        userName = this[UserDatabase.userName],
+        profilePicture = ProfilePicture(this[UserDatabase.profilePicture]),
+        animeList = this[UserDatabase.animeList],
+        malUserName = this[UserDatabase.malUsername]
     )
 
 
@@ -201,8 +207,8 @@ class DatabaseAccess {
     data class Token (val access_token: String, val refresh_token: String)
 
     private fun ResultRow.toTokens() = Token(
-        access_token = this[userStorage.accessToken],
-        refresh_token = this[userStorage.refreshToken]
+        access_token = this[UserDatabase.accessToken],
+        refresh_token = this[UserDatabase.refreshToken]
     )
 
 

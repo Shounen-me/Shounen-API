@@ -38,6 +38,7 @@ fun syncMal(discordID: String, code: String, verifier: String ) {
 
     val response = client.newCall(request).execute()
     val data = Gson().fromJson(response.body().string(), MAL_DATA::class.java)
+    println(data)
     db.syncMalToDB(discordID, data.access_token, data.refresh_token)
 }
 
@@ -59,21 +60,9 @@ fun refreshToken(refresh_token: String): MAL_DATA {
     return Gson().fromJson(response.body().string(), MAL_DATA::class.java)
 }
 
-fun getMALUrl(): List<String> {
+fun getRedirectURL(): List<String> {
     val verifier = generateVerifier(128)
     val id = (0..1000).random()
     val link = "https://api.shounen.me/mal/redirect/$verifier/$id"
     return mutableListOf(verifier, link)
-}
-
-fun callbackDiscord(callback: String, discordID: String) {
-    val code = callback.split("&")[0].substring(6)
-    val verifier = DatabaseAccess().getVerifier(discordID)
-
-    val request = Request.Builder()
-        .url(" https://api.shounen.me/mal/$discordID/sync/discord/$verifier/$code")
-        .get()
-        .build()
-
-    client.newCall(request).execute()
 }

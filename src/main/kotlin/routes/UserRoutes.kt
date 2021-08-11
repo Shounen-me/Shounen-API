@@ -1,8 +1,5 @@
 package routes
 
-import functionality.clientId
-import functionality.getMALUrl
-import functionality.syncMal
 import models.*
 import io.ktor.application.*
 import io.ktor.http.*
