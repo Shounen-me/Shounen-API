@@ -31,14 +31,9 @@ fun syncMal(discordID: String, code: String, verifier: String ) {
         .add("grant_type", "authorization")
         .build()
 
-    val request = Request.Builder()
-        .url(" https://myanimelist.net/v1/oauth2/token")
-        .post(requestBody)
-        .build()
-
-    val response = client.newCall(request).execute()
+    val response = client.newCall(createRequest(requestBody)).execute()
+    println(response)
     val data = Gson().fromJson(response.body().string(), MAL_DATA::class.java)
-    println(data)
     db.syncMalToDB(discordID, data.access_token, data.refresh_token)
 }
 
@@ -51,12 +46,7 @@ fun refreshToken(refresh_token: String): MAL_DATA {
         .add("refresh_token", refresh_token)
         .build()
 
-    val request = Request.Builder()
-        .url(" https://myanimelist.net/v1/oauth2/token")
-        .post(requestBody)
-        .build()
-
-    val response = client.newCall(request).execute()
+    val response = client.newCall(createRequest(requestBody)).execute()
     return Gson().fromJson(response.body().string(), MAL_DATA::class.java)
 }
 
@@ -66,3 +56,6 @@ fun getRedirectURL(): List<String> {
     val link = "https://api.shounen.me/mal/redirect/$verifier/$id"
     return mutableListOf(verifier, link)
 }
+
+fun createRequest(body: FormBody): Request = Request.Builder()
+    .url(" https://myanimelist.net/v1/oauth2/token").post(body).build()

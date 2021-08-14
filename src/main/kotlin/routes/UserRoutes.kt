@@ -32,7 +32,7 @@ fun Route.createUser() {
 }
 
 fun Route.getUser() {
-    get("/user/{token}/{wildcard}") { // WildCard = Discord ID or Name
+    get("/user/{wildcard}") { // WildCard = Discord ID or Name
         if (!authorized_token.contains(call.parameters["token"])) {
             call.respondText("Unauthorized access.", status = HttpStatusCode.Unauthorized)
         } else {

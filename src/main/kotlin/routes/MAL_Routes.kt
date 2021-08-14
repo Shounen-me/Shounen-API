@@ -15,6 +15,7 @@ private val authorized_token: List<String> = Files.readAllLines(Path.of("src/mai
 private val db = DatabaseAccess()
 var current_id = ""
 
+// http://localhost:8080/mal/166883258200621056/sync/init
 fun Route.syncInit() {
     get("/mal/{discordID}/sync/init") {
         val mal = getRedirectURL()
@@ -62,7 +63,7 @@ fun Route.postAnime() {
                 if (db.postAnime(id, anime))
                     call.respondText("Anime added successfully.", status = HttpStatusCode.OK)
                 else
-                    call.respondText("Anime couldn't be added, please try again..", status = HttpStatusCode.NotFound)
+                    call.respondText("Anime couldn't be added, please try again.", status = HttpStatusCode.NotFound)
             } else {
                 call.respondText("User does not exist.", status = HttpStatusCode.NotFound)
             }
@@ -76,6 +77,5 @@ fun Application.registerMALRoutes() {
         syncInit()
         syncRedirect()
         syncCallbackStandard()
-        // syncCallbackDiscord()
     }
 }
