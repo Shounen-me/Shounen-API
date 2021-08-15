@@ -1,9 +1,9 @@
 package src.main.kotlin.database
 
 import com.google.gson.Gson
-import functionality.AnimeList
-import functionality.client
-import functionality.refreshToken
+import sync.AnimeList
+import sync.client
+import sync.refreshToken
 import kotlinx.serialization.Serializable
 import models.User
 import okhttp3.FormBody
@@ -132,7 +132,7 @@ class DatabaseAccess {
             .addHeader("Authorization", "Bearer ${tokens.access_token}")
             .get().build()
         val response = client.newCall(request).execute()
-        return Gson().fromJson(response.body().string(), String::class.java)
+        return Gson().fromJson(response.body()!!.string(), String::class.java)
     }
 
 
@@ -147,7 +147,7 @@ class DatabaseAccess {
             .addHeader("Authorization", "Bearer ${tokens.access_token}")
             .get().build()
         val response = client.newCall(request).execute()
-        return Gson().fromJson(response.body().string(), AnimeList::class.java).data
+        return Gson().fromJson(response.body()!!.string(), AnimeList::class.java).data
     }
 
 
@@ -162,17 +162,20 @@ class DatabaseAccess {
             .addHeader("Authorization", "Bearer ${tokens.access_token}")
             .get().build()
         val response = client.newCall(request).execute()
-        return Gson().fromJson(response.body().string(), AnimeList::class.java).data
+        return Gson().fromJson(response.body()!!.string(), AnimeList::class.java).data
     }
 
 
     private fun refresh(discordID: String) {
         val tokens = refreshToken(discordID)
         transaction {
+            /*
             UserDatabase.update({UserDatabase.discordID eq id}) {
                 it[accessToken] = tokens.access_token
                 it[refreshToken] = tokens.refresh_token
             }
+
+             */
         }
     }
 

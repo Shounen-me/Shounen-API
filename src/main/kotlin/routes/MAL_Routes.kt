@@ -1,13 +1,14 @@
 package src.main.kotlin.routes
 
-import functionality.clientId
-import functionality.getRedirectURL
-import functionality.syncMal
+import sync.clientId
+import sync.getRedirectURL
+import sync.syncMal
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import src.main.kotlin.database.DatabaseAccess
+import src.main.kotlin.utils.Urls
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -31,7 +32,7 @@ fun Route.syncRedirect() {
         val verifier = call.parameters["verifier"]!!
         val requestID = call.parameters["requestID"]!!
         db.setVerifier(current_id, verifier)
-        call.respondRedirect("https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=$clientId&code_challenge=$verifier&state=RequestID$requestID")
+        call.respondRedirect("${Urls.oauthBaseUrl}authorize?response_type=code&client_id=$clientId&code_challenge=$verifier&state=RequestID$requestID")
     }
 }
 
@@ -39,9 +40,9 @@ fun Route.syncRedirect() {
 fun Route.syncCallbackStandard() {
     get("/mal/sync/standard") {
         val code = call.request.queryParameters["code"]!!
-        val verifier = functionality.db.getVerifier(current_id)
+        val verifier = sync.db.getVerifier(current_id)
         syncMal(current_id, code, verifier)
-        call.respondText("Sync to Discord in process. Please wait a moment.", status = HttpStatusCode.OK)
+        call.respondText("Sync to Discord in process. Please return to Discord.", status = HttpStatusCode.OK)
     }
 }
 

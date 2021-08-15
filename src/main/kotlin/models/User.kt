@@ -37,7 +37,7 @@ data class User(val id: String, val userName: String,
             .build()
 
         val picture = client.newCall(request).execute()
-        return picture.body().string().subSequence(8, 40).toString()
+        return picture.body()!!.string().subSequence(8, 40).toString()
     }
 
 
