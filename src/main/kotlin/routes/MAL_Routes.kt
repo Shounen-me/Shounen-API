@@ -19,11 +19,9 @@ var current_id = ""
 // http://localhost:8080/mal/166883258200621056/sync/init
 fun Route.syncInit() {
     get("/mal/{discordID}/sync/init") {
-        val mal = getRedirectURL()
-        val verifier = mal[0]
-        val link = mal[1]
+        val link = getRedirectURL()
         current_id = call.parameters["discordID"]!!
-        call.respondText("$verifier, $link", status = HttpStatusCode.OK)
+        call.respondText(link, status = HttpStatusCode.OK)
     }
 }
 

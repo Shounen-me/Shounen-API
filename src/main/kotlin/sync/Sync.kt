@@ -58,11 +58,10 @@ fun refreshToken(refresh_token: String)  {
 
 }
 
-fun getRedirectURL(): List<String> {
+fun getRedirectURL(): String {
     val verifier = generateVerifier(128)
     val id = (0..1000).random()
-    val link = "${Urls.redirectUri}$verifier/$id"
-    return mutableListOf(verifier, link)
+    return "${Urls.redirectUri}$verifier/$id"
 }
 
 fun createLoginService(): LoginService =

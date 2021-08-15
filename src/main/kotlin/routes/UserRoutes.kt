@@ -15,15 +15,15 @@ private val authorized_token: List<String> = Files.readAllLines(Path.of("src/mai
 private val db = DatabaseAccess()
 
 fun Route.createUser() {
-    post("/user/{token}/{discordID}/{discordName}") {
-        if (!authorized_token.contains(call.parameters["token"])) {
+    post("/user") {
+        if (!authorized_token.contains(call.request.queryParameters["token"])) {
             call.respondText("Unauthorized access.", status = HttpStatusCode.Unauthorized)
         } else {
-            val discordID = call.parameters["discordID"]
-            val name = call.parameters["discordName"]
+            val discordID = call.request.queryParameters["discordID"]
+            val name = call.request.queryParameters["name"]
             if (discordID?.let { it1 -> db.getUser(it1).id } == "") {
                 name?.let { it1 -> User(discordID, it1) }?.let { it2 -> db.postUser(it2) }
-                call.respondText("User stored correctly.", status = HttpStatusCode.Created)
+                call.respond(db.getUser(discordID))
             } else {
                 call.respondText("User already exists.", status = HttpStatusCode.Forbidden)
             }
@@ -65,17 +65,17 @@ fun Route.postProfilePicture() {
 }
 
 fun Route.deleteUser() {
-    delete("/user/{token}/{discordID}") {
-        if (!authorized_token.contains(call.parameters["token"])) {
+    delete("/user") {
+        if (!authorized_token.contains(call.request.queryParameters["token"])) {
             call.respondText("Unauthorized access.", status = HttpStatusCode.Unauthorized)
         } else {
-            val id = call.parameters["discordID"]
+            val id = call.request.queryParameters["id"]
             val user = id?.let { it1 -> db.getUser(it1) }
             if (user != null && user.id != "") {
                 db.deleteUser(id)
                 call.respondText("Deletion was successful.", status = HttpStatusCode.OK)
             } else
-                call.respondText("User does not exist.", status = HttpStatusCode.NotFound)
+                call.respondText("Deletion failed, user does not exist.", status = HttpStatusCode.NotFound)
         }
     }
 }
