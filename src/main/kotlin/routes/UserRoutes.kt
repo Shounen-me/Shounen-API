@@ -33,15 +33,11 @@ fun Route.createUser() {
 
 fun Route.getUser() {
     get("/user/{wildcard}") { // WildCard = Discord ID or Name
-        if (!authorized_token.contains(call.parameters["token"])) {
-            call.respondText("Unauthorized access.", status = HttpStatusCode.Unauthorized)
-        } else {
-            val id = call.parameters["wildcard"]
-            val user = id?.let { it1 -> db.getUser(it1) }
-            if (user != null) {
-                if (user.id == "") call.respondText("User doesn't exist", status = HttpStatusCode.NotFound)
-                else call.respond(user)
-            }
+        val id = call.parameters["wildcard"]
+        val user = id?.let { it1 -> db.getUser(it1) }
+        if (user != null) {
+            if (user.id == "") call.respondText("User doesn't exist", status = HttpStatusCode.NotFound)
+            else call.respond(user)
         }
     }
 }

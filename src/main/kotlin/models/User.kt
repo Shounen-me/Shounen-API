@@ -9,7 +9,7 @@ import src.main.kotlin.models.ProfilePicture
 @Serializable
 data class User(val id: String, val userName: String,
                 val profilePicture: ProfilePicture = ProfilePicture("zero"),
-                var animeList: Int = 0, val malUserName: String = "$userName has not synced their MAL account yet.") {
+                var animeList: Int = 0, var malUserName: String = "$userName has not synced their MAL account yet.") {
 
     fun getProfilePicture(): String {
         return if (profilePicture.link == "zero") createWaifuPicture() else this.profilePicture.link
