@@ -8,10 +8,8 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import src.main.kotlin.database.DatabaseAccess
 import src.main.kotlin.models.ProfilePicture
-import java.nio.file.Files
-import java.nio.file.Path
+import src.main.kotlin.utils.SecretUtils.authorized_token
 
-private val authorized_token: List<String> = Files.readAllLines(Path.of("src/main/resources/secrets/authorized_keys.txt"))
 private val db = DatabaseAccess()
 
 fun Route.createUser() {

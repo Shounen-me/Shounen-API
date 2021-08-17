@@ -8,8 +8,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 val db = DatabaseAccess()
-val clientId: String = Files.readAllLines(Path.of("src/main/resources/secrets/mal.txt"))[0]
-val clientSecret: String = Files.readAllLines(Path.of("src/main/resources/secrets/mal.txt"))[1]
+
 
 fun getRedirectURL(): String {
     val verifier = generateVerifier(128)

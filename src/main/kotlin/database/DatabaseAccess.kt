@@ -7,8 +7,8 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import src.main.kotlin.models.Access
 import src.main.kotlin.models.ProfilePicture
-import src.main.kotlin.sync.MAL_Client
-import sync.*
+import src.main.kotlin.utils.SecretUtils.clientId
+import src.main.kotlin.utils.SecretUtils.clientSecret
 
 // Database Quick Fix (relation xxx existiert nicht oder spalte xxx hat null values:
 // Neuer Name für DB bzw neuen Table
@@ -68,10 +68,6 @@ class DatabaseAccess {
     }
 
 
-    fun postAnime(discordID: String, animeID: String): Boolean {
-        return false
-    }
-
     fun postProfilePicture(id: String, link: String) {
         connect()
         transaction {
@@ -86,18 +82,6 @@ class DatabaseAccess {
         connect()
         transaction { user_database.deleteWhere { user_database.discordID eq discordID } }
     }
-
-
-
-    // Get user name from MyAnimeList
-    private fun getMALUserName(discordID: String): String {
-        refresh(discordID)
-        val access = getAccess(discordID)
-        return MyAnimeList
-            .withAuthorization(MyAnimeListAuthenticator(clientId, clientSecret, access.code, access.verifier))
-            .authenticatedUser.name
-    }
-
 
     fun setVerifier(id: String, code: String) {
         connect()
