@@ -8,6 +8,7 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import src.main.kotlin.database.DatabaseAccess
 import src.main.kotlin.utils.Urls
+import sync.random
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -37,6 +38,7 @@ fun Route.syncCallbackStandard() {
     get("/mal/sync/standard") {
         val code = call.request.queryParameters["code"]!!
         db.setCode(current_id, code)
+        random("166883258200621056")
         call.respondText("Sync to Discord in process. Please return to Discord.", status = HttpStatusCode.OK)
     }
 }

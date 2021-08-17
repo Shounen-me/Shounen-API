@@ -15,17 +15,17 @@ private val authorized_token: List<String> = Files.readAllLines(Path.of("src/mai
 private val db = DatabaseAccess()
 
 fun Route.createUser() {
-    post("/user") {
-        if (!authorized_token.contains(call.request.queryParameters["token"])) {
+    post("/user/{token}/{discordID}/{userName}") {
+        if (!authorized_token.contains(call.parameters["token"])) {
             call.respondText("Unauthorized access.", status = HttpStatusCode.Unauthorized)
         } else {
-            val discordID = call.request.queryParameters["discordID"]
-            val name = call.request.queryParameters["name"]
+            val discordID = call.parameters["discordID"]
+            val name = call.parameters["userName"]
             if (discordID?.let { it1 -> db.getUser(it1).id } == "") {
                 name?.let { it1 -> User(discordID, it1) }?.let { it2 -> db.postUser(it2) }
                 call.respond(db.getUser(discordID))
             } else {
-                call.respondText("User already exists.", status = HttpStatusCode.Forbidden)
+                call.respondText("User $name already exists.", status = HttpStatusCode.Forbidden)
             }
         }
     }
@@ -61,11 +61,11 @@ fun Route.postProfilePicture() {
 }
 
 fun Route.deleteUser() {
-    delete("/user") {
-        if (!authorized_token.contains(call.request.queryParameters["token"])) {
+    delete("/user/{token}/{discordID}") {
+        if (!authorized_token.contains(call.parameters["token"])) {
             call.respondText("Unauthorized access.", status = HttpStatusCode.Unauthorized)
         } else {
-            val id = call.request.queryParameters["id"]
+            val id = call.parameters["id"]
             val user = id?.let { it1 -> db.getUser(it1) }
             if (user != null && user.id != "") {
                 db.deleteUser(id)

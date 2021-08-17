@@ -2,11 +2,12 @@ package src.main.kotlin.database
 
 import com.kttdevelopment.mal4j.MyAnimeList
 import com.kttdevelopment.mal4j.MyAnimeListAuthenticator
-import kotlinx.serialization.Serializable
 import models.User
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import src.main.kotlin.models.Access
 import src.main.kotlin.models.ProfilePicture
+import src.main.kotlin.sync.MAL_Client
 import sync.*
 
 // Database Quick Fix (relation xxx existiert nicht oder spalte xxx hat null values:
@@ -16,16 +17,16 @@ import sync.*
 
 class DatabaseAccess {
 
-    object UserDatabase: Table() {
+    object user_database: Table() {
         val discordID = varchar("discordID", 255)
         val userName = varchar("userName", 255)
-        val profilePicture = varchar("profilePicture", 255)
+        val profilePicture = varchar("profilePicture", 1000)
         val animeList = integer("animeList")
         val malUsername = varchar("malUsername", 255)
         val accessToken = varchar("accessToken", 255)
         val refreshToken = varchar("refreshToken", 255)
         val verifier = varchar("verifier", 255)
-        val code = varchar("code", 255)
+        val code = varchar("code", 1024)
     }
 
 
@@ -35,16 +36,14 @@ class DatabaseAccess {
         try {
             transaction {
                 addLogger(StdOutSqlLogger)
-                SchemaUtils.create(UserDatabase)
-                SchemaUtils.createMissingTablesAndColumns(UserDatabase)
+                SchemaUtils.create(user_database)
+                SchemaUtils.createMissingTablesAndColumns(user_database)
                 user = if (wildcard.toLongOrNull() != null) {
-                    UserDatabase.select { UserDatabase.discordID eq wildcard }.first().toUser()
+                    user_database.select { user_database.discordID eq wildcard }.first().toUser()
                 } else {
-                    UserDatabase.select { UserDatabase.userName eq wildcard }.first().toUser()
+                    user_database.select { user_database.userName eq wildcard }.first().toUser()
                 }
                 user.setProfilePicture(user.getProfilePicture())
-                user.malUserName = getMALUserName(wildcard)
-                println(user.malUserName)
             }
         } catch (e: NoSuchElementException) { }
         return user
@@ -54,17 +53,17 @@ class DatabaseAccess {
         connect()
         transaction {
             addLogger(StdOutSqlLogger)
-            UserDatabase.insert {
+            user_database.insert {
                 it[discordID] = user.id
                 it[userName] = user.userName
                 it[profilePicture] = "zero"
                 it[animeList] = 0
-                it[malUsername] = "/"
+                it[malUsername] = "${user.userName} has not synced their MAL account yet."
                 it[accessToken] = ""
                 it[refreshToken] = ""
                 it[verifier] = ""
                 it[code] = ""
-            } get UserDatabase.discordID
+            } get user_database.discordID
         }
     }
 
@@ -77,7 +76,7 @@ class DatabaseAccess {
         connect()
         transaction {
             addLogger(StdOutSqlLogger)
-            UserDatabase.update({UserDatabase.discordID eq id}) {
+            user_database.update({user_database.discordID eq id}) {
                 it[profilePicture] = link
             }
         }
@@ -85,7 +84,7 @@ class DatabaseAccess {
 
     fun deleteUser(discordID: String) {
         connect()
-        transaction { UserDatabase.deleteWhere { UserDatabase.discordID eq discordID } }
+        transaction { user_database.deleteWhere { user_database.discordID eq discordID } }
     }
 
 
@@ -93,84 +92,56 @@ class DatabaseAccess {
     // Get user name from MyAnimeList
     private fun getMALUserName(discordID: String): String {
         refresh(discordID)
+        val access = getAccess(discordID)
         return MyAnimeList
-            .withAuthorization(MyAnimeListAuthenticator(clientId, clientSecret, getCode(discordID), getVerifier(discordID)))
+            .withAuthorization(MyAnimeListAuthenticator(clientId, clientSecret, access.code, access.verifier))
             .authenticatedUser.name
     }
-    /*
-
-
-    // Fetch current (completed) anime list from MAL
-
-    fun fetchCompletedAnime(discordID: String): Array<String> {
-        refresh(discordID)
-
-    }
-
-
-
-    // Fetch the ten latest anime on the user's 'currently watching' list
-    fun fetchWatchingAnime(discordID: String): Array<String> {
-        refresh(discordID)
-
-    }
-
-     */
 
 
     fun setVerifier(id: String, code: String) {
         connect()
         transaction {
-            UserDatabase.update({UserDatabase.discordID eq id}) {
+            user_database.update({user_database.discordID eq id}) {
                 it[verifier] = code
             }
         }
     }
 
-    fun getVerifier(id: String): String {
+    fun getAccess(id: String) : Access {
         connect()
+        var access = Access("lol", "lol")
         transaction {
-            return@transaction UserDatabase.select { UserDatabase.discordID eq id }.first()[UserDatabase.verifier]
+            access = user_database.select { user_database.discordID eq id }.first().toAccess()
         }
-        return "User not found."
-    }
-
-    private fun getCode(id: String): String {
-        connect()
-        transaction {
-            return@transaction UserDatabase.select { UserDatabase.discordID eq id }.first()[UserDatabase.code]
-        }
-        return "User not found."
+        return access
     }
 
     fun setCode(id: String, s: String) {
         connect()
         transaction {
-            UserDatabase.update({UserDatabase.discordID eq id}) {
+            user_database.update({user_database.discordID eq id}) {
                 it[code] = s
             }
         }
     }
 
-    private fun refresh(id: String) = MyAnimeList.withAuthorization(MyAnimeListAuthenticator(clientId, clientSecret, getCode(id), getVerifier(id))).refreshOAuthToken()
-
-
+    private fun refresh(id: String) =
+        MyAnimeList.withAuthorization(
+            MyAnimeListAuthenticator(clientId, clientSecret, getAccess(id).code, getAccess(id).verifier)
+        ).refreshOAuthToken()
 
     private fun ResultRow.toUser() = User(
-        id = this[UserDatabase.discordID],
-        userName = this[UserDatabase.userName],
-        profilePicture = ProfilePicture(this[UserDatabase.profilePicture]),
-        animeList = this[UserDatabase.animeList],
-        malUserName = this[UserDatabase.malUsername]
+        id = this[user_database.discordID],
+        userName = this[user_database.userName],
+        profilePicture = ProfilePicture(this[user_database.profilePicture]),
+        animeList = this[user_database.animeList],
+        malUserName = this[user_database.malUsername]
     )
 
-
-    @Serializable
-    data class Token (val access_token: String, val refresh_token: String)
-
-    private fun ResultRow.toTokens() = Token(
-        access_token = this[UserDatabase.accessToken],
-        refresh_token = this[UserDatabase.refreshToken]
+    private fun ResultRow.toAccess() = Access(
+        verifier = this[user_database.verifier],
+        code = this[user_database.code]
     )
 
 
