@@ -15,7 +15,7 @@ private val db = DatabaseAccess()
 var current_id = ""
 
 fun Route.syncInit() {
-    get("/mal/{discordID}/sync/init") {
+    get("/mal/sync/{discordID}/init") {
         val link = getRedirectURL()
         current_id = call.parameters["discordID"]!!
         call.respondText(link, status = HttpStatusCode.OK)

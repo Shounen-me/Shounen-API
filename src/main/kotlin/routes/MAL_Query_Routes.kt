@@ -23,15 +23,17 @@ fun Route.postAnime() {
 }
 
 fun Route.postManga() {
-    post("/mal/manga/{token}/{discordID}/{id}/{volumes}/{chapters}") {
+    post("/mal/manga/{token}/{discordID}/{id}/{chapters}") {
         if (authorized_token.contains(call.parameters["token"])) {
             call.respondText("Unauthorized access.", status = HttpStatusCode.Unauthorized)
         } else {
             val mangaID = call.parameters["id"]!!
             val discordID = call.parameters["discordID"]!!
-            val chapterCount = call.parameters["chapters"]!!.toInt()
-            val volumeCount = call.parameters["volumes"]!!.toInt()
-            MAL_Client(discordID).postManga(mangaID.toLong(), volumeCount, chapterCount)
+            val chapterCount = call.parameters["chapters"]?.toInt()
+            if (chapterCount != null)
+                MAL_Client(discordID).postManga(mangaID.toLong(), chapterCount)
+            else
+                MAL_Client(discordID).postManga(mangaID.toLong())
             call.respondText("Manga added successfully.", status = HttpStatusCode.OK)
         }
     }

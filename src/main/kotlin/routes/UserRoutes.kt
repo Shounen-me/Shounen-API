@@ -42,7 +42,7 @@ fun Route.getUser() {
 
 
 fun Route.postProfilePicture() {
-    post("/user/{token}/{discordID}/profile") {
+    post("/user/profile/{token}/{discordID}") {
         if (!authorized_token.contains(call.parameters["token"])) {
             call.respondText("Unauthorized access.", status = HttpStatusCode.Unauthorized)
         } else {

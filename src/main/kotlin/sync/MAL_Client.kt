@@ -36,11 +36,19 @@ class MAL_Client(discordID: String) {
             .update()
     }
 
-    fun postManga(mangaID: Long, volumes: Int, chapters: Int) {
+    fun postManga(mangaID: Long, chapters: Int) {
+        mal.updateMangaListing(mangaID)
+            .status(MangaStatus.Reading)
+            .chaptersRead(chapters)
+            .rereading(false)
+            .priority(Priority.High)
+            .rereadValue(RereadValue.High)
+            .update()
+    }
+
+    fun postManga(mangaID: Long) {
         mal.updateMangaListing(mangaID)
             .status(MangaStatus.Completed)
-            .volumesRead(volumes)
-            .chaptersRead(chapters)
             .rereading(false)
             .priority(Priority.High)
             .rereadValue(RereadValue.High)
