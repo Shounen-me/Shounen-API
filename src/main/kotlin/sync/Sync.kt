@@ -16,6 +16,7 @@ fun getRedirectURL(): String {
     return "${Urls.redirectUri}$verifier/$id"
 }
 
+// Function for testing purposes after the MAL API callback
 fun random(discordID: String) {
     println(db.getAccess(discordID))
     println(MAL_Client(discordID).getUserName())

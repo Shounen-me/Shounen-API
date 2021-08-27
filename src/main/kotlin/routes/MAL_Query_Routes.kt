@@ -4,6 +4,7 @@ import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import src.main.kotlin.models.PostQuery
 import src.main.kotlin.sync.MAL_Client
 import src.main.kotlin.utils.SecretUtils.authorized_token
 
@@ -13,10 +14,9 @@ fun Route.postAnime() {
         if (!authorized_token.contains(call.parameters["token"])) {
             call.respondText("Unauthorized access.", status = HttpStatusCode.Unauthorized)
         } else {
-            val animeID = call.parameters["id"]!!
-            val discordID = call.parameters["discordID"]!!
-            val episodeCount = call.parameters["episodes"]!!.toInt()
-            MAL_Client(discordID).postAnime(animeID.toLong(), episodeCount)
+            val query = PostQuery(call.parameters["id"]!!.toLong(), call.parameters["discordID"]!!,
+                call.parameters["episodes"]!!.toInt())
+            MAL_Client(query.discordID).postAnime(query.queryID, query.count)
             call.respondText("Anime added successfully.", status = HttpStatusCode.OK)
         }
     }
@@ -27,13 +27,12 @@ fun Route.postManga() {
         if (authorized_token.contains(call.parameters["token"])) {
             call.respondText("Unauthorized access.", status = HttpStatusCode.Unauthorized)
         } else {
-            val mangaID = call.parameters["id"]!!
-            val discordID = call.parameters["discordID"]!!
-            val chapterCount = call.parameters["chapters"]?.toInt()
-            if (chapterCount != null)
-                MAL_Client(discordID).postManga(mangaID.toLong(), chapterCount)
+            val query =  PostQuery(call.parameters["id"]!!.toLong(), call.parameters["discordID"]!!,
+                call.parameters["episodes"]!!.toInt())
+            if (query.count != 0)
+                MAL_Client(query.discordID).postManga(query.queryID, query.count)
             else
-                MAL_Client(discordID).postManga(mangaID.toLong())
+                MAL_Client(query.discordID).postManga(query.queryID)
             call.respondText("Manga added successfully.", status = HttpStatusCode.OK)
         }
     }
