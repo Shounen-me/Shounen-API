@@ -1,9 +1,8 @@
-package models
+package src.main.kotlin.models.anime
 
 import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import src.main.kotlin.models.ProfilePicture
 
 
 @Serializable

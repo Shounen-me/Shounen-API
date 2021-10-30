@@ -4,7 +4,7 @@ import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import src.main.kotlin.models.PostQuery
+import src.main.kotlin.models.anime.PostQuery
 import src.main.kotlin.sync.MAL_Client
 import src.main.kotlin.utils.SecretUtils.authorized_token
 

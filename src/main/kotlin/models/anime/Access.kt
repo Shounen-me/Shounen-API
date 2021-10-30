@@ -1,4 +1,4 @@
-package src.main.kotlin.models
+package src.main.kotlin.models.anime
 
 data class Access(
     val verifier: String,

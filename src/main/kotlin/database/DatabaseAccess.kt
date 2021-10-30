@@ -2,11 +2,11 @@ package src.main.kotlin.database
 
 import com.kttdevelopment.mal4j.MyAnimeList
 import com.kttdevelopment.mal4j.MyAnimeListAuthenticator
-import models.User
+import src.main.kotlin.models.anime.User
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import src.main.kotlin.models.Access
-import src.main.kotlin.models.ProfilePicture
+import src.main.kotlin.models.anime.Access
+import src.main.kotlin.models.anime.ProfilePicture
 import src.main.kotlin.utils.SecretUtils.clientId
 import src.main.kotlin.utils.SecretUtils.clientSecret
 
@@ -28,6 +28,7 @@ class DatabaseAccess {
         val verifier = varchar("verifier", 255)
         val code = varchar("code", 1024)
     }
+
 
 
     fun getUser(wildcard: String): User { // wildcard = unique DiscordID or username
