@@ -36,6 +36,7 @@ dependencies {
     implementation ("com.google.code.gson:gson:2.8.7")
     implementation("com.kttdevelopment:mal4j:2.3.0")
     implementation(kotlin("stdlib-jdk8"))
+    implementation("redis.clients:jedis:3.7.0")
 
 }
 val compileKotlin: KotlinCompile by tasks

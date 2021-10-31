@@ -1,4 +1,4 @@
-package src.main.kotlin.database
+package src.main.kotlin.database.postgres
 
 import com.kttdevelopment.mal4j.MyAnimeList
 import com.kttdevelopment.mal4j.MyAnimeListAuthenticator
@@ -73,7 +73,7 @@ class DatabaseAccess {
         connect()
         transaction {
             addLogger(StdOutSqlLogger)
-            user_database.update({user_database.discordID eq id}) {
+            user_database.update({ user_database.discordID eq id}) {
                 it[profilePicture] = link
             }
         }
@@ -87,7 +87,7 @@ class DatabaseAccess {
     fun setVerifier(id: String, code: String) {
         connect()
         transaction {
-            user_database.update({user_database.discordID eq id}) {
+            user_database.update({ user_database.discordID eq id}) {
                 it[verifier] = code
             }
         }
@@ -105,7 +105,7 @@ class DatabaseAccess {
     fun setCode(id: String, s: String) {
         connect()
         transaction {
-            user_database.update({user_database.discordID eq id}) {
+            user_database.update({ user_database.discordID eq id}) {
                 it[code] = s
             }
         }

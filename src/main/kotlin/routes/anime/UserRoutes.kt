@@ -5,7 +5,7 @@ import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import src.main.kotlin.database.DatabaseAccess
+import src.main.kotlin.database.postgres.DatabaseAccess
 import src.main.kotlin.models.anime.ProfilePicture
 import src.main.kotlin.models.anime.User
 import src.main.kotlin.utils.SecretUtils.authorized_token

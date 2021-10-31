@@ -1,4 +1,4 @@
-package src.main.kotlin.database
+package src.main.kotlin.database.postgres
 
 import org.jetbrains.exposed.sql.Database
 import java.nio.file.Files

@@ -5,7 +5,7 @@ import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import src.main.kotlin.database.DatabaseAccess
+import src.main.kotlin.database.postgres.DatabaseAccess
 import src.main.kotlin.utils.SecretUtils.clientId
 import src.main.kotlin.utils.Urls
 import sync.random

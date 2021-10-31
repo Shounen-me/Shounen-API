@@ -1,11 +1,9 @@
 package sync
 
-import src.main.kotlin.database.DatabaseAccess
+import src.main.kotlin.database.postgres.DatabaseAccess
 import src.main.kotlin.sync.MAL_Client
 import src.main.kotlin.utils.generateVerifier
 import src.main.kotlin.utils.Urls
-import java.nio.file.Files
-import java.nio.file.Path
 
 val db = DatabaseAccess()
 

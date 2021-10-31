@@ -3,7 +3,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.*
 import org.junit.Test
-import src.main.kotlin.database.DatabaseAccess
+import src.main.kotlin.database.postgres.DatabaseAccess
 import src.main.kotlin.utils.generateVerifier
 import java.nio.file.Files
 import java.nio.file.Path

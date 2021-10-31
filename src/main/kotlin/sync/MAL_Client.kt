@@ -4,14 +4,13 @@ import com.kttdevelopment.mal4j.AccessToken
 import com.kttdevelopment.mal4j.MyAnimeList
 import com.kttdevelopment.mal4j.MyAnimeListAuthenticator
 import com.kttdevelopment.mal4j.anime.Anime
-import com.kttdevelopment.mal4j.anime.AnimeListStatus
 import com.kttdevelopment.mal4j.anime.property.AnimeStatus
 import com.kttdevelopment.mal4j.anime.property.RewatchValue
 import com.kttdevelopment.mal4j.manga.Manga
 import com.kttdevelopment.mal4j.manga.property.MangaStatus
 import com.kttdevelopment.mal4j.manga.property.RereadValue
 import com.kttdevelopment.mal4j.property.Priority
-import src.main.kotlin.database.DatabaseAccess
+import src.main.kotlin.database.postgres.DatabaseAccess
 import src.main.kotlin.utils.SecretUtils.clientId
 import src.main.kotlin.utils.SecretUtils.clientSecret
 
