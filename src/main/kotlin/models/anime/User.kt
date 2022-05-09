@@ -17,15 +17,18 @@ data class User(val id: String, val userName: String,
     fun setProfilePicture(url: String): String {
         this.profilePicture.link = url
         return "Profile picture successfully set!"
-        /*if (URL(url).toURI() != null) {
-            this.profilePicture = url
-            return "Profile picture succesfully set!"
+        if (URL(url).toURI() == null || !checkValidProfilePictureUrl(url)) {
+            return "Please enter a valid url for your profile picture."
         }
-        return "Please enter a valid url for your profile picture."
-         */
+        this.profilePicture = url
+        return "Profile picture succesfully set!"
     }
 
-
+    private fun checkValidProfilePictureUrl(url: String): Boolean {
+        val connection = URL("image url here").openConnection()
+        val contentType = connection.getHeaderField("Content-Type")
+        return contentType.startsWith("image/")
+    }
 
     // Get random picture from Waifu.pics
     private fun createWaifuPicture(): String {
