@@ -4,6 +4,7 @@ import com.kttdevelopment.mal4j.MyAnimeList
 import com.kttdevelopment.mal4j.MyAnimeListAuthenticator
 import src.main.kotlin.models.anime.User
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import src.main.kotlin.models.anime.Access
 import src.main.kotlin.models.anime.ProfilePicture
@@ -29,24 +30,26 @@ class DatabaseAccess {
         val code = varchar("code", 1024)
     }
 
-
-
     fun getUser(wildcard: String): User { // wildcard = unique DiscordID or username
         connect()
         var user = User("", "", ProfilePicture(""))
+
         try {
             transaction {
                 addLogger(StdOutSqlLogger)
                 SchemaUtils.create(user_database)
                 SchemaUtils.createMissingTablesAndColumns(user_database)
                 user = if (wildcard.toLongOrNull() != null) {
-                    user_database.select { user_database.discordID eq wildcard }.first().toUser()
+                    user_database.selectAll().where { user_database.discordID eq wildcard }.first().toUser()
                 } else {
-                    user_database.select { user_database.userName eq wildcard }.first().toUser()
+                    user_database.selectAll().where { user_database.userName eq wildcard }.first().toUser()
                 }
                 user.setProfilePicture(user.getProfilePicture())
             }
-        } catch (e: NoSuchElementException) { }
+        } catch (e: NoSuchElementException) {
+            exposedLogger.error("User not found. Discord ID / Username: $wildcard")
+        }
+
         return user
     }
 
@@ -97,7 +100,7 @@ class DatabaseAccess {
         connect()
         var access = Access("lol", "lol")
         transaction {
-            access = user_database.select { user_database.discordID eq id }.first().toAccess()
+            access = user_database.selectAll().where { user_database.discordID eq id }.first().toAccess()
         }
         return access
     }
@@ -112,9 +115,9 @@ class DatabaseAccess {
     }
 
     private fun refresh(id: String) =
-        MyAnimeList.withAuthorization(
-            MyAnimeListAuthenticator(clientId, clientSecret, getAccess(id).code, getAccess(id).verifier)
-        ).refreshOAuthToken()
+        MyAnimeList
+            .withAuthorization(MyAnimeListAuthenticator(clientId, clientSecret, getAccess(id).code, getAccess(id).verifier))
+            .refreshOAuthToken()
 
     private fun ResultRow.toUser() = User(
         id = this[user_database.discordID],
@@ -128,6 +131,5 @@ class DatabaseAccess {
         verifier = this[user_database.verifier],
         code = this[user_database.code]
     )
-
 
 }

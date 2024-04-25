@@ -1,9 +1,9 @@
-package src.main.kotlin.routes
+package routes.anime
 
-import io.ktor.application.*
 import io.ktor.http.*
-import io.ktor.response.*
-import io.ktor.routing.*
+import io.ktor.server.application.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import src.main.kotlin.models.anime.PostQuery
 import src.main.kotlin.sync.MAL_Client
 import src.main.kotlin.utils.SecretUtils.authorized_token
@@ -14,8 +14,12 @@ fun Route.postAnime() {
         if (!authorized_token.contains(call.parameters["token"])) {
             call.respondText("Unauthorized access.", status = HttpStatusCode.Unauthorized)
         } else {
-            val query = PostQuery(call.parameters["id"]!!.toLong(), call.parameters["discordID"]!!,
-                call.parameters["episodes"]!!.toInt())
+            val query =
+                PostQuery(
+                    call.parameters["id"]!!.toLong(),
+                    call.parameters["discordID"]!!,
+                    call.parameters["episodes"]!!.toInt(),
+                )
             MAL_Client(query.discordID).postAnime(query.queryID, query.count)
             call.respondText("Anime added successfully.", status = HttpStatusCode.OK)
         }
@@ -27,12 +31,17 @@ fun Route.postManga() {
         if (authorized_token.contains(call.parameters["token"])) {
             call.respondText("Unauthorized access.", status = HttpStatusCode.Unauthorized)
         } else {
-            val query =  PostQuery(call.parameters["id"]!!.toLong(), call.parameters["discordID"]!!,
-                call.parameters["episodes"]!!.toInt())
-            if (query.count != 0)
+            val query =
+                PostQuery(
+                    call.parameters["id"]!!.toLong(),
+                    call.parameters["discordID"]!!,
+                    call.parameters["episodes"]!!.toInt(),
+                )
+            if (query.count != 0) {
                 MAL_Client(query.discordID).postManga(query.queryID, query.count)
-            else
+            } else {
                 MAL_Client(query.discordID).postManga(query.queryID)
+            }
             call.respondText("Manga added successfully.", status = HttpStatusCode.OK)
         }
     }
@@ -50,7 +59,6 @@ fun Route.getAnimeAndManga() {
         }
     }
 }
-
 
 fun Application.registerMALQueryRoutes() {
     routing {

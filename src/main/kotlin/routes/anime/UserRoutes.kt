@@ -1,10 +1,10 @@
-package routes
+package routes.anime
 
-import io.ktor.application.*
 import io.ktor.http.*
-import io.ktor.request.*
-import io.ktor.response.*
-import io.ktor.routing.*
+import io.ktor.server.application.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import src.main.kotlin.database.postgres.DatabaseAccess
 import src.main.kotlin.models.anime.ProfilePicture
 import src.main.kotlin.models.anime.User
@@ -34,12 +34,14 @@ fun Route.getUser() {
         val id = call.parameters["wildcard"]
         val user = id?.let { it1 -> db.getUser(it1) }
         if (user != null) {
-            if (user.id == "") call.respondText("User doesn't exist", status = HttpStatusCode.NotFound)
-            else call.respond(user)
+            if (user.id == "") {
+                call.respondText("User doesn't exist", status = HttpStatusCode.NotFound)
+            } else {
+                call.respond(user)
+            }
         }
     }
 }
-
 
 fun Route.postProfilePicture() {
     post("/user/profile/{token}/{discordID}") {
@@ -49,13 +51,16 @@ fun Route.postProfilePicture() {
             val picture = call.receive<ProfilePicture>().link
             val id = call.parameters["discordID"]
             val user = id?.let { it1 -> db.getUser(it1) }
-            if (user != null && user.id != "") {
+            if (user == null || user.id == "") {
+                call.respondText("User does not exist.", status = HttpStatusCode.NotFound)
+            } else if (picture == null) {
+                call.respondText("No profile picture was provided.", status = HttpStatusCode.BadRequest)
+            } else {
                 db.postProfilePicture(id, picture)
                 call.respondText("Profile picture was set successfully.", status = HttpStatusCode.OK)
-            } else call.respondText("User does not exist.", status = HttpStatusCode.NotFound)
+            }
         }
     }
-
 }
 
 fun Route.deleteUser() {
@@ -68,14 +73,12 @@ fun Route.deleteUser() {
             if (user != null && user.id != "") {
                 db.deleteUser(id)
                 call.respondText("Deletion was successful.", status = HttpStatusCode.OK)
-            } else
+            } else {
                 call.respondText("Deletion failed, user does not exist.", status = HttpStatusCode.NotFound)
+            }
         }
     }
 }
-
-
-
 
 fun Application.registerUserRoutes() {
     routing {

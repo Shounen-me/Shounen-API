@@ -1,23 +1,34 @@
 package src.main.kotlin
 
-import io.ktor.application.*
-import io.ktor.features.*
-import io.ktor.serialization.*
-import routes.registerUserRoutes
-import src.main.kotlin.routes.registerMALQueryRoutes
-import src.main.kotlin.routes.registerMALRoutes
+import io.ktor.server.application.*
+import io.ktor.server.engine.*
+import io.ktor.server.netty.*
+import routes.anime.registerMALQueryRoutes
+import routes.anime.registerMALRoutes
+import routes.anime.registerUserRoutes
 
-// TODO Profile Picture SFW Authorization (manual per admin?)
+// High Priority:
+// TODO: Dockerization + Docker Compose
+// TODO: Increase Code style (awful amount of code smells from younger me)
+// TODO: Increase Code coverage and use KoTest (with TestContainers)
+// TODO: Move plugins to separate libraries.gradle.kts
+// TODO: Retake shounen.me domain and deploy project
+// TODO: Additional features
+
+// Low Priority:
+// TODO Profile Picture SFW Authorization
 // TODO Check for valid link to picture file for profile picture
-// TODO Check why the heck I get a bad request response from MAL
-// Change redirect url back to api.shounen.me from localhost
 
-fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
+fun main() {
+    embeddedServer(
+        Netty,
+        port = 8080,
+        host = "0.0.0.0",
+        module = Application::module,
+    ).start(wait = true)
+}
 
-fun Application.module(testing: Boolean = false) {
-    install(ContentNegotiation) {
-        json()
-    }
+fun Application.module() {
     registerUserRoutes()
     registerMALRoutes()
     registerMALQueryRoutes()

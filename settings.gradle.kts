@@ -1,1 +1,1 @@
-rootProject.name = "Ktor-API"
+rootProject.name = "Shounen"
